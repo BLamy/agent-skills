@@ -33,19 +33,23 @@ describe('cache-loop-length', () => {
       ],
       invalid: [
         {
-          code: `
-            for (let i = 0; i < arr.length; i++) {
-              console.log(arr[i]);
-            }
-          `,
+          code: `for (let i = 0; i < arr.length; i++) {
+  console.log(arr[i]);
+}`,
+          output: `const arrLen = arr.length;
+for (let i = 0; i < arrLen; i++) {
+  console.log(arr[i]);
+}`,
           errors: [{ messageId: 'cacheLengthInLoop' }],
         },
         {
-          code: `
-            for (let i = 0; i < items.length; i++) {
-              process(items[i]);
-            }
-          `,
+          code: `for (let i = 0; i < items.length; i++) {
+  process(items[i]);
+}`,
+          output: `const itemsLen = items.length;
+for (let i = 0; i < itemsLen; i++) {
+  process(items[i]);
+}`,
           errors: [{ messageId: 'cacheLengthInLoop' }],
         },
       ],

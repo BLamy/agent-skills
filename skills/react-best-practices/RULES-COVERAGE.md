@@ -374,6 +374,8 @@ for (let i = 0; i < arr.length; i++) {  // ⚠️ .length accessed every iterati
 // Better: const len = arr.length; for (let i = 0; i < len; i++)
 ```
 
+**Auto-fixable!** Inserts length cache before loop and replaces condition.
+
 ---
 
 ### ❌ 7.4 Cache Repeated Function Calls (`js-cache-function-results`)
@@ -462,6 +464,8 @@ const latest = items.sort((a, b) => b.date - a.date)[0]  // ⚠️ O(n log n)
 // Use: single loop O(n) or Math.max()
 ```
 
+**Auto-fixable!** For simple numeric arrays like `arr.sort((a,b)=>a-b)[0]`, replaces with `Math.min(...arr)`.
+
 ---
 
 ### ✅ 7.11 Use Set/Map for O(1) Lookups (`js-set-map-lookups`)
@@ -521,12 +525,12 @@ const sorted = items.sort(compareFn)  // ❌ Mutates original
 | 6.7 | `no-falsy-and-operator` | Rendering | ✅ |
 | 6.8 | `no-nested-ternary-in-jsx` | Rendering | ❌ |
 | 7.2 | `no-array-find-in-loop` | JS Perf | ✅ |
-| 7.3 | `cache-loop-length` | JS Perf | ❌ |
+| 7.3 | `cache-loop-length` | JS Perf | ✅ |
 | 7.5 | `no-uncached-storage` | JS Perf | ❌ |
 | 7.6 | `no-multiple-array-iterations` | JS Perf | ❌ |
 | 7.8 | `prefer-early-return` | JS Perf | ❌ |
 | 7.9 | `no-regexp-in-render` | JS Perf | ✅ |
-| 7.10 | `no-sort-for-minmax` | JS Perf | ❌ |
+| 7.10 | `no-sort-for-minmax` | JS Perf | ✅ |
 | 7.11 | `no-includes-in-loop` | JS Perf | ✅ |
 | 7.12 | `prefer-tosorted` | JS Perf | ✅ |
 
