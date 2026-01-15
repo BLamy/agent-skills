@@ -35,7 +35,7 @@ module.exports = {
   },
 
   create(context) {
-    const sourceCode = context.getSourceCode();
+    const sourceCode = context.sourceCode || context.getSourceCode();
     const ignoredFunctions = new Set(context.options[0]?.ignoredFunctions ?? []);
 
     // Common cheap functions that don't need lazy init

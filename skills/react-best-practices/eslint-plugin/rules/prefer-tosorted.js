@@ -37,7 +37,7 @@ module.exports = {
 
   create(context) {
     const fixToSpread = context.options[0]?.fixToSpread ?? false;
-    const sourceCode = context.getSourceCode();
+    const sourceCode = context.sourceCode || context.getSourceCode();
 
     // Track useState variables
     const stateVariables = new Set();

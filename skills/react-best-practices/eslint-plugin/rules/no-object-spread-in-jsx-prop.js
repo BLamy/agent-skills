@@ -36,6 +36,7 @@ module.exports = {
   },
 
   create(context) {
+    const sourceCode = context.sourceCode || context.getSourceCode();
     const allowedComponents = new Set(context.options[0]?.allowedComponents ?? []);
 
     function getComponentName(node) {
@@ -69,7 +70,6 @@ module.exports = {
             data: { name: argument.name },
           });
         } else if (argument.type === 'MemberExpression') {
-          const sourceCode = context.getSourceCode();
           context.report({
             node,
             messageId: 'avoidSpread',

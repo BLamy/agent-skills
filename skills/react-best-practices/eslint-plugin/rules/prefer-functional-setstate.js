@@ -23,11 +23,30 @@ module.exports = {
   },
 
   create(context) {
-    const sourceCode = context.getSourceCode();
-    // Track useState declarations: { setterName: stateName }
-    const stateSetters = new Map();
-    // Track which state variables exist
-    const stateVariables = new Set();
+    const sourceCode = context.sourceCode || context.getSourceCode();
+    // Track state per component to avoid cross-component false positives
+    // Stack of { setters: Map, variables: Set } for nested components
+    const componentStack = [];
+
+    function getCurrentState() {
+      return componentStack.length > 0
+        ? componentStack[componentStack.length - 1]
+        : { setters: new Map(), variables: new Set() };
+    }
+
+    function isComponentLike(node) {
+      // Check if function name starts with capital letter (React component convention)
+      let name = null;
+      if (node.type === 'FunctionDeclaration' && node.id) {
+        name = node.id.name;
+      } else if (
+        node.parent?.type === 'VariableDeclarator' &&
+        node.parent.id?.type === 'Identifier'
+      ) {
+        name = node.parent.id.name;
+      }
+      return name && /^[A-Z]/.test(name);
+    }
 
     function isUseStateCall(node) {
       return (
@@ -37,7 +56,7 @@ module.exports = {
       );
     }
 
-    function findReferencedStateVariables(node, referencedVars = new Set()) {
+    function findReferencedStateVariables(node, stateVariables, referencedVars = new Set()) {
       if (!node) return referencedVars;
 
       if (node.type === 'Identifier' && stateVariables.has(node.name)) {
@@ -52,11 +71,11 @@ module.exports = {
           if (Array.isArray(child)) {
             child.forEach((c) => {
               if (c && typeof c === 'object') {
-                findReferencedStateVariables(c, referencedVars);
+                findReferencedStateVariables(c, stateVariables, referencedVars);
               }
             });
           } else {
-            findReferencedStateVariables(child, referencedVars);
+            findReferencedStateVariables(child, stateVariables, referencedVars);
           }
         }
       }
@@ -76,6 +95,20 @@ module.exports = {
     }
 
     return {
+      // Track component entry
+      'FunctionDeclaration, FunctionExpression, ArrowFunctionExpression'(node) {
+        if (isComponentLike(node)) {
+          componentStack.push({ setters: new Map(), variables: new Set() });
+        }
+      },
+
+      // Track component exit
+      'FunctionDeclaration:exit, FunctionExpression:exit, ArrowFunctionExpression:exit'(node) {
+        if (isComponentLike(node) && componentStack.length > 0) {
+          componentStack.pop();
+        }
+      },
+
       // Track useState declarations
       VariableDeclarator(node) {
         if (
@@ -90,8 +123,9 @@ module.exports = {
             const stateName = stateNode.name;
             const setterName = setterNode.name;
 
-            stateVariables.add(stateName);
-            stateSetters.set(setterName, stateName);
+            const state = getCurrentState();
+            state.variables.add(stateName);
+            state.setters.set(setterName, stateName);
           }
         }
       },
@@ -101,8 +135,9 @@ module.exports = {
         // Check if this is a setState call
         if (node.callee.type !== 'Identifier') return;
 
+        const state = getCurrentState();
         const setterName = node.callee.name;
-        const stateName = stateSetters.get(setterName);
+        const stateName = state.setters.get(setterName);
 
         if (!stateName) return;
         if (node.arguments.length === 0) return;
@@ -118,7 +153,7 @@ module.exports = {
         }
 
         // Find all state variables referenced in the argument
-        const referencedVars = findReferencedStateVariables(argument);
+        const referencedVars = findReferencedStateVariables(argument, state.variables);
 
         // If the corresponding state variable is referenced, report
         if (referencedVars.has(stateName)) {

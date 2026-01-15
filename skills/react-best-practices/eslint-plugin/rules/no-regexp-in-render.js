@@ -25,7 +25,7 @@ module.exports = {
   },
 
   create(context) {
-    const sourceCode = context.getSourceCode();
+    const sourceCode = context.sourceCode || context.getSourceCode();
     // Track if we're inside a React component
     const componentStack = [];
 

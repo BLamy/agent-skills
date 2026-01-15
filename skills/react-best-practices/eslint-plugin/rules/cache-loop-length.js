@@ -24,7 +24,7 @@ module.exports = {
   },
 
   create(context) {
-    const sourceCode = context.getSourceCode();
+    const sourceCode = context.sourceCode || context.getSourceCode();
 
     /**
      * Gets the statement that contains the for loop (to insert before it)

@@ -81,70 +81,77 @@ const plugin = {
     'prefer-early-return': preferEarlyReturn,
     'prefer-length-check-first': preferLengthCheckFirst,
   },
-  configs: {
-    recommended: {
-      plugins: ['react-best-practices'],
-      rules: {
-        // Critical rules (errors)
-        'react-best-practices/no-sequential-await': 'warn',
-        'react-best-practices/prefer-dynamic-import': 'warn',
-        'react-best-practices/prefer-tosorted': 'error',
-        'react-best-practices/no-falsy-and-operator': 'error',
+  // Configs are populated below with self-reference for flat config compatibility
+  configs: {},
+};
 
-        // High impact rules (warnings)
-        'react-best-practices/no-await-before-condition': 'warn',
-        'react-best-practices/prefer-lazy-state-init': 'warn',
-        'react-best-practices/prefer-functional-setstate': 'warn',
-        'react-best-practices/no-array-find-in-loop': 'warn',
-        'react-best-practices/no-includes-in-loop': 'warn',
+// Populate configs with plugin self-reference for ESLint flat config compatibility
+plugin.configs.recommended = {
+  plugins: {
+    'react-best-practices': plugin,
+  },
+  rules: {
+    // Critical rules (errors)
+    'react-best-practices/no-sequential-await': 'warn',
+    'react-best-practices/prefer-dynamic-import': 'warn',
+    'react-best-practices/prefer-tosorted': 'error',
+    'react-best-practices/no-falsy-and-operator': 'error',
 
-        // Medium impact rules (warnings)
-        'react-best-practices/prefer-narrow-dependencies': 'warn',
-        'react-best-practices/no-regexp-in-render': 'warn',
-        'react-best-practices/no-uncached-storage': 'warn',
-        'react-best-practices/no-sort-for-minmax': 'warn',
+    // High impact rules (warnings)
+    'react-best-practices/no-await-before-condition': 'warn',
+    'react-best-practices/prefer-lazy-state-init': 'warn',
+    'react-best-practices/prefer-functional-setstate': 'warn',
+    'react-best-practices/no-array-find-in-loop': 'warn',
+    'react-best-practices/no-includes-in-loop': 'warn',
 
-        // Code quality rules
-        'react-best-practices/no-nested-ternary-in-jsx': 'warn',
-        'react-best-practices/prefer-early-return': 'warn',
+    // Medium impact rules (warnings)
+    'react-best-practices/prefer-narrow-dependencies': 'warn',
+    'react-best-practices/no-regexp-in-render': 'warn',
+    'react-best-practices/no-uncached-storage': 'warn',
+    'react-best-practices/no-sort-for-minmax': 'warn',
 
-        // Medium-high impact rules
-        'react-best-practices/prefer-length-check-first': 'warn',
-        'react-best-practices/prefer-transition-for-frequent-updates': 'warn',
+    // Code quality rules
+    'react-best-practices/no-nested-ternary-in-jsx': 'warn',
+    'react-best-practices/prefer-early-return': 'warn',
 
-        // Lower impact rules (off by default)
-        'react-best-practices/no-multiple-array-iterations': 'off',
-        'react-best-practices/no-object-spread-in-jsx-prop': 'off',
-        'react-best-practices/cache-loop-length': 'off',
-        'react-best-practices/prefer-static-jsx-outside': 'off', // React Compiler handles this
-      },
-    },
-    strict: {
-      plugins: ['react-best-practices'],
-      rules: {
-        'react-best-practices/no-sequential-await': 'error',
-        'react-best-practices/no-await-before-condition': 'error',
-        'react-best-practices/prefer-dynamic-import': 'error',
-        'react-best-practices/no-object-spread-in-jsx-prop': 'warn',
-        'react-best-practices/prefer-lazy-state-init': 'error',
-        'react-best-practices/prefer-functional-setstate': 'error',
-        'react-best-practices/prefer-narrow-dependencies': 'error',
-        'react-best-practices/no-falsy-and-operator': 'error',
-        'react-best-practices/no-array-find-in-loop': 'error',
-        'react-best-practices/no-includes-in-loop': 'error',
-        'react-best-practices/no-multiple-array-iterations': 'warn',
-        'react-best-practices/no-uncached-storage': 'error',
-        'react-best-practices/prefer-tosorted': 'error',
-        'react-best-practices/no-regexp-in-render': 'error',
-        'react-best-practices/no-sort-for-minmax': 'error',
-        'react-best-practices/no-nested-ternary-in-jsx': 'error',
-        'react-best-practices/prefer-early-return': 'error',
-        'react-best-practices/cache-loop-length': 'warn',
-        'react-best-practices/prefer-length-check-first': 'error',
-        'react-best-practices/prefer-transition-for-frequent-updates': 'error',
-        'react-best-practices/prefer-static-jsx-outside': 'warn',
-      },
-    },
+    // Medium-high impact rules
+    'react-best-practices/prefer-length-check-first': 'warn',
+    'react-best-practices/prefer-transition-for-frequent-updates': 'warn',
+
+    // Lower impact rules (off by default)
+    'react-best-practices/no-multiple-array-iterations': 'off',
+    'react-best-practices/no-object-spread-in-jsx-prop': 'off',
+    'react-best-practices/cache-loop-length': 'off',
+    'react-best-practices/prefer-static-jsx-outside': 'off', // React Compiler handles this
+  },
+};
+
+plugin.configs.strict = {
+  plugins: {
+    'react-best-practices': plugin,
+  },
+  rules: {
+    'react-best-practices/no-sequential-await': 'error',
+    'react-best-practices/no-await-before-condition': 'error',
+    'react-best-practices/prefer-dynamic-import': 'error',
+    'react-best-practices/no-object-spread-in-jsx-prop': 'warn',
+    'react-best-practices/prefer-lazy-state-init': 'error',
+    'react-best-practices/prefer-functional-setstate': 'error',
+    'react-best-practices/prefer-narrow-dependencies': 'error',
+    'react-best-practices/no-falsy-and-operator': 'error',
+    'react-best-practices/no-array-find-in-loop': 'error',
+    'react-best-practices/no-includes-in-loop': 'error',
+    'react-best-practices/no-multiple-array-iterations': 'warn',
+    'react-best-practices/no-uncached-storage': 'error',
+    'react-best-practices/prefer-tosorted': 'error',
+    'react-best-practices/no-regexp-in-render': 'error',
+    'react-best-practices/no-sort-for-minmax': 'error',
+    'react-best-practices/no-nested-ternary-in-jsx': 'error',
+    'react-best-practices/prefer-early-return': 'error',
+    'react-best-practices/cache-loop-length': 'warn',
+    'react-best-practices/prefer-length-check-first': 'error',
+    'react-best-practices/prefer-transition-for-frequent-updates': 'error',
+    'react-best-practices/prefer-static-jsx-outside': 'warn',
   },
 };
 
