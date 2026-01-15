@@ -16,7 +16,7 @@ module.exports = {
     fixable: 'code',
     messages: {
       falsyAnd:
-        '"{{name}}" might be 0 or NaN which will render. Use explicit check: {{name}} > 0 ? <Component /> : null',
+        '"{{name}}" might be 0 or NaN which will render. Use explicit check: {{name}} !== 0 ? <Component /> : null',
       falsyAndGeneric:
         'Left side of && might be 0 or NaN which will render. Use ternary: condition ? <Component /> : null',
     },
@@ -140,7 +140,7 @@ module.exports = {
             fix(fixer) {
               return fixer.replaceText(
                 node,
-                `${leftText} > 0 ? ${rightText} : null`
+                `${leftText} !== 0 ? ${rightText} : null`
               );
             },
           });

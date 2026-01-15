@@ -14,14 +14,17 @@ describe('no-falsy-and-operator', () => {
       invalid: [
         {
           code: `<div>{items.length && <List items={items} />}</div>`,
+          output: `<div>{items.length !== 0 ? <List items={items} /> : null}</div>`,
           errors: [{ messageId: 'falsyAnd' }],
         },
         {
           code: `<div>{count && <Badge>{count}</Badge>}</div>`,
+          output: `<div>{count !== 0 ? <Badge>{count}</Badge> : null}</div>`,
           errors: [{ messageId: 'falsyAnd' }],
         },
         {
           code: `<div>{total && <Total value={total} />}</div>`,
+          output: `<div>{total !== 0 ? <Total value={total} /> : null}</div>`,
           errors: [{ messageId: 'falsyAnd' }],
         },
       ],
