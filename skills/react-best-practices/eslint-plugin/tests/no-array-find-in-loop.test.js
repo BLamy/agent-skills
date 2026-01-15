@@ -17,19 +17,23 @@ describe('no-array-find-in-loop', () => {
       ],
       invalid: [
         {
-          code: `
-            orders.map(order => ({
-              user: users.find(u => u.id === order.userId)
-            }));
-          `,
+          code: `orders.map(order => ({
+  user: users.find(u => u.id === order.userId)
+}));`,
+          output: `const usersById = new Map(users.map(u => [u.id, u]));
+orders.map(order => ({
+  user: usersById.get(order.userId)
+}));`,
           errors: [{ messageId: 'findInMap' }],
         },
         {
-          code: `
-            for (const order of orders) {
-              const user = users.find(u => u.id === order.userId);
-            }
-          `,
+          code: `for (const order of orders) {
+  const user = users.find(u => u.id === order.userId);
+}`,
+          output: `const usersById = new Map(users.map(u => [u.id, u]));
+for (const order of orders) {
+  const user = usersById.get(order.userId);
+}`,
           errors: [{ messageId: 'findInLoop' }],
         },
       ],

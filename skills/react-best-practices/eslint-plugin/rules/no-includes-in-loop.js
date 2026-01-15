@@ -14,14 +14,16 @@ module.exports = {
       category: 'Performance',
       recommended: true,
     },
+    fixable: 'code',
     messages: {
       includesInLoop:
-        '.includes() inside a loop is O(n) per iteration. Convert to Set before the loop: const {{arrayName}}Set = new Set({{arrayName}})',
+        '.includes() inside a loop is O(n) per iteration. Convert to Set before the loop for O(1) lookups.',
     },
     schema: [],
   },
 
   create(context) {
+    const sourceCode = context.getSourceCode();
     const loopStack = [];
 
     function enterLoop(node) {
@@ -34,6 +36,23 @@ module.exports = {
 
     function isInsideLoop() {
       return loopStack.length > 0;
+    }
+
+    /**
+     * Gets the statement that contains the loop (to insert Set declaration before it)
+     */
+    function getContainingStatement(node) {
+      let current = node;
+      while (current.parent) {
+        if (
+          current.parent.type === 'Program' ||
+          current.parent.type === 'BlockStatement'
+        ) {
+          return current;
+        }
+        current = current.parent;
+      }
+      return current;
     }
 
     return {
@@ -68,15 +87,37 @@ module.exports = {
         if (!isInsideLoop()) return;
 
         // Get the array name being checked
-        let arrayName = 'array';
+        let arrayName = null;
         if (node.callee.object.type === 'Identifier') {
           arrayName = node.callee.object.name;
         }
 
+        // Get the argument being searched for
+        const searchArg = node.arguments[0];
+        const searchValue = searchArg ? sourceCode.getText(searchArg) : null;
+
+        const outermostLoop = loopStack[0];
+
         context.report({
           node,
           messageId: 'includesInLoop',
-          data: { arrayName },
+          fix: arrayName && searchValue ? (fixer) => {
+            const setName = `${arrayName}Set`;
+
+            // Create the Set declaration
+            const setDeclaration = `const ${setName} = new Set(${arrayName});\n`;
+
+            // Find where to insert the Set declaration
+            const containingStatement = getContainingStatement(outermostLoop);
+
+            // Replace the includes() call with set.has()
+            const replacement = `${setName}.has(${searchValue})`;
+
+            return [
+              fixer.insertTextBefore(containingStatement, setDeclaration),
+              fixer.replaceText(node, replacement),
+            ];
+          } : null,
         });
       },
     };

@@ -16,14 +16,18 @@ describe('no-includes-in-loop', () => {
       invalid: [
         {
           code: `items.filter(item => allowedIds.includes(item.id));`,
+          output: `const allowedIdsSet = new Set(allowedIds);
+items.filter(item => allowedIdsSet.has(item.id));`,
           errors: [{ messageId: 'includesInLoop' }],
         },
         {
-          code: `
-            for (const item of items) {
-              if (allowedIds.includes(item.id)) process(item);
-            }
-          `,
+          code: `for (const item of items) {
+  if (allowedIds.includes(item.id)) process(item);
+}`,
+          output: `const allowedIdsSet = new Set(allowedIds);
+for (const item of items) {
+  if (allowedIdsSet.has(item.id)) process(item);
+}`,
           errors: [{ messageId: 'includesInLoop' }],
         },
       ],

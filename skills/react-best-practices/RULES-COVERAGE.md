@@ -357,6 +357,8 @@ orders.map(order => ({
 }))
 ```
 
+**Auto-fixable!** Generates Map declaration and replaces `.find()` with `.get()`.
+
 ---
 
 ### ✅ 7.3 Cache Property Access in Loops (`js-cache-property-access`)
@@ -473,6 +475,8 @@ items.filter(item => allowedIds.includes(item.id))  // ⚠️ O(n²)
 // Use: const allowedSet = new Set(allowedIds); allowedSet.has(item.id)
 ```
 
+**Auto-fixable!** Generates Set declaration and replaces `.includes()` with `.has()`.
+
 ---
 
 ### ✅ 7.12 Use toSorted() Instead of sort() for Immutability (`js-tosorted-immutable`)
@@ -516,14 +520,14 @@ const sorted = items.sort(compareFn)  // ❌ Mutates original
 | 5.6 | `prefer-lazy-state-init` | Re-render | ✅ |
 | 6.7 | `no-falsy-and-operator` | Rendering | ✅ |
 | 6.8 | `no-nested-ternary-in-jsx` | Rendering | ❌ |
-| 7.2 | `no-array-find-in-loop` | JS Perf | ❌ |
+| 7.2 | `no-array-find-in-loop` | JS Perf | ✅ |
 | 7.3 | `cache-loop-length` | JS Perf | ❌ |
 | 7.5 | `no-uncached-storage` | JS Perf | ❌ |
 | 7.6 | `no-multiple-array-iterations` | JS Perf | ❌ |
 | 7.8 | `prefer-early-return` | JS Perf | ❌ |
 | 7.9 | `no-regexp-in-render` | JS Perf | ✅ |
 | 7.10 | `no-sort-for-minmax` | JS Perf | ❌ |
-| 7.11 | `no-includes-in-loop` | JS Perf | ❌ |
+| 7.11 | `no-includes-in-loop` | JS Perf | ✅ |
 | 7.12 | `prefer-tosorted` | JS Perf | ✅ |
 
 ---
