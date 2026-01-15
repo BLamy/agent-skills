@@ -135,41 +135,6 @@ module.exports = {
             },
           });
         }
-
-        // Check for JSON.parse, localStorage.getItem, etc.
-        if (
-          initialValue.type === 'CallExpression' &&
-          initialValue.callee.type === 'MemberExpression'
-        ) {
-          const objName = initialValue.callee.object.name;
-          const propName = initialValue.callee.property.name;
-
-          // Known expensive operations
-          const expensiveOps = [
-            ['JSON', 'parse'],
-            ['localStorage', 'getItem'],
-            ['sessionStorage', 'getItem'],
-            ['document', 'querySelector'],
-            ['document', 'querySelectorAll'],
-            ['document', 'getElementById'],
-          ];
-
-          const isExpensive = expensiveOps.some(
-            ([obj, prop]) => objName === obj && propName === prop
-          );
-
-          if (isExpensive) {
-            const callText = sourceCode.getText(initialValue);
-
-            context.report({
-              node: initialValue,
-              messageId: 'preferLazyInitSimple',
-              fix(fixer) {
-                return fixer.replaceText(initialValue, `() => ${callText}`);
-              },
-            });
-          }
-        }
       },
     };
   },

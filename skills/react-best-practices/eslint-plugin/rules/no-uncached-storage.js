@@ -23,12 +23,9 @@ module.exports = {
   },
 
   create(context) {
+    const sourceCode = context.sourceCode || context.getSourceCode();
     // Track storage calls per scope: { scope -> { storageType:method:key -> [nodes] } }
     const storageCalls = new Map();
-
-    function getCurrentScope() {
-      return context.getScope();
-    }
 
     function getCallsForScope(scope) {
       if (!storageCalls.has(scope)) {
@@ -38,7 +35,7 @@ module.exports = {
     }
 
     function recordStorageCall(storageType, method, key, node) {
-      const scope = getCurrentScope();
+      const scope = sourceCode.getScope(node);
       const calls = getCallsForScope(scope);
 
       const callKey = `${storageType}:${method}:${key || 'dynamic'}`;
@@ -102,26 +99,26 @@ module.exports = {
         }
       },
 
-      'FunctionDeclaration:exit'() {
-        const scope = context.getScope();
+      'FunctionDeclaration:exit'(node) {
+        const scope = sourceCode.getScope(node);
         checkAndReport(scope);
         storageCalls.delete(scope);
       },
 
-      'FunctionExpression:exit'() {
-        const scope = context.getScope();
+      'FunctionExpression:exit'(node) {
+        const scope = sourceCode.getScope(node);
         checkAndReport(scope);
         storageCalls.delete(scope);
       },
 
-      'ArrowFunctionExpression:exit'() {
-        const scope = context.getScope();
+      'ArrowFunctionExpression:exit'(node) {
+        const scope = sourceCode.getScope(node);
         checkAndReport(scope);
         storageCalls.delete(scope);
       },
 
-      'Program:exit'() {
-        const scope = context.getScope();
+      'Program:exit'(node) {
+        const scope = sourceCode.getScope(node);
         checkAndReport(scope);
       },
     };

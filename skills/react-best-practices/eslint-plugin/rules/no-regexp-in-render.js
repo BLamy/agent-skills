@@ -17,7 +17,7 @@ module.exports = {
     fixable: 'code',
     messages: {
       regexpInRender:
-        'RegExp created inside component runs on every render. Hoist to module scope or wrap in useMemo().',
+        'RegExp created inside component runs on every render. Hoist to module scope or wrap in React.useMemo().',
       regexpLiteralInRender:
         'RegExp literal inside component is recreated on every render. Hoist to module scope for static patterns.',
     },
@@ -48,12 +48,23 @@ module.exports = {
     function isInsideUseMemo(node) {
       let current = node.parent;
       while (current) {
-        if (
-          current.type === 'CallExpression' &&
-          current.callee.type === 'Identifier' &&
-          current.callee.name === 'useMemo'
-        ) {
-          return true;
+        if (current.type === 'CallExpression') {
+          // Check for useMemo()
+          if (
+            current.callee.type === 'Identifier' &&
+            current.callee.name === 'useMemo'
+          ) {
+            return true;
+          }
+          // Check for React.useMemo()
+          if (
+            current.callee.type === 'MemberExpression' &&
+            current.callee.object.type === 'Identifier' &&
+            current.callee.object.name === 'React' &&
+            current.callee.property.name === 'useMemo'
+          ) {
+            return true;
+          }
         }
         current = current.parent;
       }
@@ -61,16 +72,26 @@ module.exports = {
     }
 
     function isInsideCallback(node) {
+      const hookNames = ['useCallback', 'useMemo', 'useEffect', 'useLayoutEffect'];
       let current = node.parent;
       while (current) {
-        if (
-          current.type === 'CallExpression' &&
-          current.callee.type === 'Identifier' &&
-          ['useCallback', 'useMemo', 'useEffect', 'useLayoutEffect'].includes(
-            current.callee.name
-          )
-        ) {
-          return true;
+        if (current.type === 'CallExpression') {
+          // Check for useX()
+          if (
+            current.callee.type === 'Identifier' &&
+            hookNames.includes(current.callee.name)
+          ) {
+            return true;
+          }
+          // Check for React.useX()
+          if (
+            current.callee.type === 'MemberExpression' &&
+            current.callee.object.type === 'Identifier' &&
+            current.callee.object.name === 'React' &&
+            hookNames.includes(current.callee.property.name)
+          ) {
+            return true;
+          }
         }
         current = current.parent;
       }
@@ -141,8 +162,8 @@ module.exports = {
             node,
             messageId: 'regexpLiteralInRender',
             fix(fixer) {
-              // Wrap the regexp literal in useMemo with empty deps (no external dependencies)
-              return fixer.replaceText(node, `useMemo(() => ${regexpText}, [])`);
+              // Wrap the regexp literal in React.useMemo (React is always imported, useMemo might not be)
+              return fixer.replaceText(node, `React.useMemo(() => ${regexpText}, [])`);
             },
           });
         }

@@ -84,6 +84,9 @@ module.exports = {
         if (
           property.type === 'BinaryExpression' &&
           property.operator === '-' &&
+          property.left.type === 'MemberExpression' &&
+          property.left.property.type === 'Identifier' &&
+          property.left.property.name === 'length' &&
           property.right.type === 'Literal' &&
           property.right.value === 1
         ) {
@@ -97,6 +100,7 @@ module.exports = {
         if (obj.type !== 'CallExpression') return;
         if (obj.callee.type !== 'MemberExpression') return;
 
+        if (obj.callee.property.type !== 'Identifier') return;
         const methodName = obj.callee.property.name;
         if (methodName !== 'sort' && methodName !== 'toSorted') return;
 

@@ -34,14 +34,11 @@ module.exports = {
   },
 
   create(context) {
+    const sourceCode = context.sourceCode || context.getSourceCode();
     const minIterations = context.options[0]?.minIterations ?? 3;
 
     // Track array iterations per scope
     const scopeIterations = new Map();
-
-    function getCurrentScope() {
-      return context.getScope();
-    }
 
     function getIterationsForScope(scope) {
       if (!scopeIterations.has(scope)) {
@@ -51,7 +48,7 @@ module.exports = {
     }
 
     function recordIteration(arrayName, method, node) {
-      const scope = getCurrentScope();
+      const scope = sourceCode.getScope(node);
       const iterations = getIterationsForScope(scope);
 
       const key = `${arrayName}:${method}`;
@@ -102,13 +99,13 @@ module.exports = {
       },
 
       'BlockStatement:exit'(node) {
-        const scope = context.getScope();
+        const scope = sourceCode.getScope(node);
         checkAndReport(scope);
         scopeIterations.delete(scope);
       },
 
       'Program:exit'(node) {
-        const scope = context.getScope();
+        const scope = sourceCode.getScope(node);
         checkAndReport(scope);
       },
     };

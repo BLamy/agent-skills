@@ -22,6 +22,15 @@ describe('no-regexp-in-render', () => {
           `,
         },
         {
+          // Should also recognize React.useMemo
+          code: `
+            function Highlighter({ query }) {
+              const regex = React.useMemo(() => new RegExp(query), [query]);
+              return <div>{regex.test(text)}</div>;
+            }
+          `,
+        },
+        {
           code: `
             function handleSearch(query) {
               const regex = new RegExp(query);
@@ -58,7 +67,7 @@ describe('no-regexp-in-render', () => {
           `,
           output: `
             function EmailValidator() {
-              const emailRegex = useMemo(() => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/, []);
+              const emailRegex = React.useMemo(() => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/, []);
               return <input pattern={emailRegex.source} />;
             }
           `,
