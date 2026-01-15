@@ -1,8 +1,10 @@
 /**
  * ESLint Configuration for React Best Practices
  *
- * This configuration enforces rules from the React Best Practices guide.
- * See RULES-COVERAGE.md for details on which rules are/aren't covered.
+ * This configuration enforces rules from the React Best Practices guide
+ * using both standard ESLint plugins and custom rules.
+ *
+ * See RULES-COVERAGE.md for details on which rules are covered.
  *
  * Usage:
  *   1. Install dependencies:
@@ -10,7 +12,7 @@
  *        @typescript-eslint/parser eslint-plugin-react eslint-plugin-react-hooks \
  *        eslint-plugin-import
  *
- *   2. Copy this file to your project root
+ *   2. Copy this file and the eslint-plugin directory to your project
  *
  *   3. Run: npx eslint .
  */
@@ -21,6 +23,9 @@ import tsParser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
+
+// Custom plugin for React Best Practices
+import reactBestPracticesPlugin from './eslint-plugin/index.js';
 
 export default [
   js.configs.recommended,
@@ -41,6 +46,7 @@ export default [
       'react': reactPlugin,
       'react-hooks': reactHooksPlugin,
       'import': importPlugin,
+      'react-best-practices': reactBestPracticesPlugin,
     },
     settings: {
       react: {
@@ -49,94 +55,81 @@ export default [
     },
     rules: {
       // ============================================================
-      // SECTION 2: Bundle Size Optimization
+      // CUSTOM PLUGIN RULES: react-best-practices
+      // ============================================================
+
+      // Section 1: Eliminating Waterfalls (CRITICAL)
+      'react-best-practices/no-sequential-await': 'warn',
+      'react-best-practices/no-await-before-condition': 'warn',
+
+      // Section 2: Bundle Size Optimization (CRITICAL)
+      'react-best-practices/prefer-dynamic-import': 'warn',
+
+      // Section 3: Server-Side Performance (HIGH)
+      'react-best-practices/no-object-spread-in-jsx-prop': 'off', // Enable if using RSC
+
+      // Section 5: Re-render Optimization (MEDIUM)
+      'react-best-practices/prefer-lazy-state-init': 'warn',
+      'react-best-practices/prefer-functional-setstate': 'warn',
+      'react-best-practices/prefer-narrow-dependencies': 'warn',
+
+      // Section 6: Rendering Performance (MEDIUM)
+      'react-best-practices/no-falsy-and-operator': 'error',
+
+      // Section 7: JavaScript Performance (LOW-MEDIUM)
+      'react-best-practices/no-array-find-in-loop': 'warn',
+      'react-best-practices/no-includes-in-loop': 'warn',
+      'react-best-practices/no-multiple-array-iterations': 'off', // Can be noisy
+      'react-best-practices/no-uncached-storage': 'warn',
+      'react-best-practices/prefer-tosorted': 'error',
+      'react-best-practices/no-regexp-in-render': 'warn',
+      'react-best-practices/no-sort-for-minmax': 'warn',
+
+      // ============================================================
+      // BUILT-IN RULES: Bundle Size Optimization
       // ============================================================
 
       // Rule 2.1: Avoid Barrel File Imports (bundle-barrel-imports)
-      // Warns against importing from barrel files of common large libraries
       'no-restricted-imports': ['error', {
         patterns: [
-          // lucide-react - import directly from icon files
           {
             group: ['lucide-react'],
-            message: 'Import directly from lucide-react/dist/esm/icons/* instead to reduce bundle size. Example: import Check from "lucide-react/dist/esm/icons/check"',
+            message: 'Import directly from lucide-react/dist/esm/icons/* to reduce bundle size.',
           },
-          // @mui/material - import directly from component files
           {
             group: ['@mui/material', '!@mui/material/*'],
-            message: 'Import directly from @mui/material/* instead. Example: import Button from "@mui/material/Button"',
+            message: 'Import directly from @mui/material/*. Example: import Button from "@mui/material/Button"',
           },
-          // @mui/icons-material - import directly from icon files
           {
             group: ['@mui/icons-material', '!@mui/icons-material/*'],
-            message: 'Import directly from @mui/icons-material/* instead. Example: import Add from "@mui/icons-material/Add"',
+            message: 'Import directly from @mui/icons-material/*.',
           },
-          // lodash - use lodash-es or direct imports
           {
             group: ['lodash', '!lodash/*', '!lodash-es', '!lodash-es/*'],
-            message: 'Import directly from lodash/* or use lodash-es. Example: import debounce from "lodash/debounce"',
+            message: 'Import directly from lodash/* or use lodash-es.',
           },
-          // date-fns - import directly
           {
             group: ['date-fns', '!date-fns/*'],
-            message: 'Import directly from date-fns/*. Example: import { format } from "date-fns/format"',
+            message: 'Import directly from date-fns/*.',
           },
-          // react-icons - import from specific icon set
           {
             group: ['react-icons', '!react-icons/*'],
-            message: 'Import from specific icon set. Example: import { FaGithub } from "react-icons/fa"',
+            message: 'Import from specific icon set: react-icons/fa, react-icons/fi, etc.',
           },
         ],
       }],
 
       // ============================================================
-      // SECTION 5: Re-render Optimization
+      // REACT HOOKS RULES
       // ============================================================
 
-      // Rule 5.3: Narrow Effect Dependencies (rerender-dependencies)
-      // Rule 5.5: Use Functional setState Updates (rerender-functional-setstate)
-      // Enforced via react-hooks/exhaustive-deps
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 
       // ============================================================
-      // SECTION 6: Rendering Performance
+      // IMPORT ORGANIZATION
       // ============================================================
 
-      // Rule 6.7: Use Explicit Conditional Rendering (rendering-conditional-render)
-      // Warns against && with numbers that might render 0
-      'no-restricted-syntax': ['warn',
-        {
-          selector: 'JSXExpressionContainer > LogicalExpression[operator="&&"][left.type="Identifier"]',
-          message: 'Avoid using && for conditional rendering with variables that might be 0 or NaN. Use ternary operator: condition ? <Component /> : null',
-        },
-        {
-          selector: 'JSXExpressionContainer > LogicalExpression[operator="&&"][left.type="MemberExpression"]',
-          message: 'Avoid using && for conditional rendering with properties that might be 0 or NaN. Use explicit boolean check: count > 0 ? <Component /> : null',
-        },
-        // Rule 7.9: Hoist RegExp Creation (js-hoist-regexp)
-        // Warns against creating RegExp inside JSX or render functions
-        {
-          selector: 'JSXElement NewExpression[callee.name="RegExp"]',
-          message: 'Move RegExp creation outside of JSX. Hoist to module scope or memoize with useMemo.',
-        },
-        {
-          selector: 'ArrowFunctionExpression > BlockStatement NewExpression[callee.name="RegExp"]',
-          message: 'Consider hoisting RegExp to module scope or memoizing with useMemo if this is in a component.',
-        },
-        // Rule 7.12: Use toSorted() Instead of sort() for Immutability (js-tosorted-immutable)
-        // Warns against using .sort() which mutates arrays
-        {
-          selector: 'CallExpression[callee.property.name="sort"]',
-          message: 'Array.sort() mutates the original array. Use .toSorted() for immutable sorting, or [...array].sort() for older browsers.',
-        },
-      ],
-
-      // ============================================================
-      // SECTION 7: JavaScript Performance
-      // ============================================================
-
-      // Additional import organization rules
       'import/order': ['warn', {
         groups: [
           'builtin',
@@ -154,15 +147,12 @@ export default [
         },
       }],
 
-      // Prefer const over let when variable is never reassigned
+      // ============================================================
+      // GENERAL BEST PRACTICES
+      // ============================================================
+
       'prefer-const': 'warn',
-
-      // Disallow var, prefer const/let
       'no-var': 'error',
-
-      // ============================================================
-      // General React Best Practices
-      // ============================================================
 
       // React rules
       'react/jsx-key': 'error',
@@ -177,7 +167,7 @@ export default [
       'react/require-render-return': 'error',
       'react/self-closing-comp': 'warn',
 
-      // TypeScript-specific rules that help with performance
+      // TypeScript
       '@typescript-eslint/no-unused-vars': ['warn', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',

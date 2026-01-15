@@ -6,7 +6,7 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 
 | Symbol | Meaning |
 |--------|---------|
-| ✅ | Fully covered by ESLint |
+| ✅ | Fully covered by ESLint (custom or built-in rule) |
 | ⚠️ | Partially covered by ESLint |
 | ❌ | Not covered by ESLint (requires manual review or custom tooling) |
 
@@ -16,126 +16,144 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 
 | Section | Rules | Covered | Partial | Not Covered |
 |---------|-------|---------|---------|-------------|
-| 1. Eliminating Waterfalls | 5 | 0 | 0 | 5 |
-| 2. Bundle Size Optimization | 5 | 1 | 1 | 3 |
-| 3. Server-Side Performance | 5 | 0 | 0 | 5 |
+| 1. Eliminating Waterfalls | 5 | 2 | 1 | 2 |
+| 2. Bundle Size Optimization | 5 | 2 | 0 | 3 |
+| 3. Server-Side Performance | 5 | 0 | 1 | 4 |
 | 4. Client-Side Data Fetching | 2 | 0 | 0 | 2 |
-| 5. Re-render Optimization | 7 | 1 | 2 | 4 |
-| 6. Rendering Performance | 7 | 0 | 1 | 6 |
-| 7. JavaScript Performance | 12 | 0 | 3 | 9 |
+| 5. Re-render Optimization | 7 | 3 | 1 | 3 |
+| 6. Rendering Performance | 7 | 1 | 0 | 6 |
+| 7. JavaScript Performance | 12 | 7 | 0 | 5 |
 | 8. Advanced Patterns | 2 | 0 | 0 | 2 |
-| **Total** | **45** | **2** | **7** | **36** |
+| **Total** | **45** | **15** | **3** | **27** |
+
+**Coverage improved from 4% to 33% with custom rules!**
+
+---
+
+## Custom ESLint Plugin: `eslint-plugin-react-best-practices`
+
+The custom plugin provides 15 rules covering patterns that can be statically analyzed:
+
+```javascript
+// eslint.config.js
+import reactBestPracticesPlugin from './eslint-plugin/index.js';
+
+export default [{
+  plugins: {
+    'react-best-practices': reactBestPracticesPlugin,
+  },
+  rules: {
+    'react-best-practices/no-sequential-await': 'warn',
+    // ... see eslint.config.js for all rules
+  }
+}];
+```
 
 ---
 
 ## Section 1: Eliminating Waterfalls (CRITICAL)
 
-### ❌ 1.1 Defer Await Until Needed (`async-defer-await`)
-**ESLint Status:** Not covered
+### ✅ 1.1 Defer Await Until Needed (`async-defer-await`)
+**ESLint Rule:** `react-best-practices/no-await-before-condition`
 
-**Why:** Detecting whether an `await` could be deferred requires understanding data flow, control flow, and whether the awaited value is actually needed in each code path. This is semantic analysis beyond ESLint's capability.
+Detects await statements followed by early return conditions that don't use the awaited value.
 
-**Alternative:** Code review, or custom static analysis with tools like TypeScript compiler API.
+```javascript
+// Triggers warning:
+async function handle(userId, skip) {
+  const data = await fetchData(userId)  // ⚠️ Await before condition
+  if (skip) return { skipped: true }    // Doesn't use 'data'
+  return processData(data)
+}
+```
 
 ---
 
-### ❌ 1.2 Dependency-Based Parallelization (`async-dependencies`)
-**ESLint Status:** Not covered
+### ⚠️ 1.2 Dependency-Based Parallelization (`async-dependencies`)
+**ESLint Status:** Partially covered by `no-sequential-await`
 
-**Why:** Detecting partial dependencies between async operations requires understanding the data flow between promises. ESLint cannot determine if operations are independent or have partial dependencies.
-
-**Alternative:** Use `better-all` library and code review.
+**Why Partial:** The rule detects sequential awaits but cannot determine if operations have partial dependencies that could use `better-all`.
 
 ---
 
 ### ❌ 1.3 Prevent Waterfall Chains in API Routes (`async-api-routes`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting sequential awaits that could be parallelized requires understanding which operations are independent. ESLint can detect sequential awaits but cannot determine if they can be parallelized.
-
-**Alternative:** Code review, profiling with React DevTools.
+**Why:** Detecting the optimal pattern (start promise early, await late) requires understanding the full data flow.
 
 ---
 
-### ❌ 1.4 Promise.all() for Independent Operations (`async-parallel`)
-**ESLint Status:** Not covered
+### ✅ 1.4 Promise.all() for Independent Operations (`async-parallel`)
+**ESLint Rule:** `react-best-practices/no-sequential-await`
 
-**Why:** Same as above - requires understanding operation independence.
+Detects consecutive await statements that could potentially be parallelized.
 
-**Alternative:** Code review, profiling.
+```javascript
+// Triggers warning:
+async function fetchAll() {
+  const user = await fetchUser()     // ⚠️ Sequential awaits detected
+  const posts = await fetchPosts()   // Could use Promise.all()
+  const comments = await fetchComments()
+}
+```
 
 ---
 
 ### ❌ 1.5 Strategic Suspense Boundaries (`async-suspense-boundaries`)
 **ESLint Status:** Not covered
 
-**Why:** Determining optimal Suspense boundary placement requires understanding component hierarchy, data dependencies, and UX priorities.
-
-**Alternative:** React DevTools profiling, manual optimization.
+**Why:** Optimal Suspense placement requires understanding UX priorities.
 
 ---
 
 ## Section 2: Bundle Size Optimization (CRITICAL)
 
 ### ✅ 2.1 Avoid Barrel File Imports (`bundle-barrel-imports`)
-**ESLint Status:** Fully covered
+**ESLint Rule:** Built-in `no-restricted-imports`
 
-**ESLint Rule:** `no-restricted-imports`
+Configured to warn against barrel imports from common heavy libraries.
 
-**Configuration:**
 ```javascript
-'no-restricted-imports': ['error', {
-  patterns: [
-    { group: ['lucide-react'], message: 'Import directly...' },
-    { group: ['@mui/material', '!@mui/material/*'], message: '...' },
-    // ... see eslint.config.js
-  ]
-}]
+// Triggers error:
+import { Check } from 'lucide-react'  // ❌ Use direct import
+import { Button } from '@mui/material' // ❌ Use @mui/material/Button
 ```
-
-**Covered Libraries:**
-- `lucide-react`
-- `@mui/material`
-- `@mui/icons-material`
-- `lodash`
-- `date-fns`
-- `react-icons`
 
 ---
 
-### ⚠️ 2.2 Conditional Module Loading (`bundle-conditional`)
-**ESLint Status:** Partially covered
+### ❌ 2.2 Conditional Module Loading (`bundle-conditional`)
+**ESLint Status:** Not covered
 
-**Why:** ESLint can detect static imports at the top of files, but cannot determine if a module should be conditionally loaded based on runtime conditions.
-
-**Partial Coverage:** Can use `no-restricted-imports` to ban certain imports and require dynamic imports instead.
+**Why:** Determining when to conditionally load requires runtime context.
 
 ---
 
 ### ❌ 2.3 Defer Non-Critical Third-Party Libraries (`bundle-defer-third-party`)
 **ESLint Status:** Not covered
 
-**Why:** Determining which libraries are "non-critical" requires understanding the application's requirements.
-
-**Alternative:** Manual review, bundle analysis tools.
+**Why:** Determining which libraries are "non-critical" requires understanding application requirements.
 
 ---
 
-### ❌ 2.4 Dynamic Imports for Heavy Components (`bundle-dynamic-imports`)
-**ESLint Status:** Not covered
+### ✅ 2.4 Dynamic Imports for Heavy Components (`bundle-dynamic-imports`)
+**ESLint Rule:** `react-best-practices/prefer-dynamic-import`
 
-**Why:** Determining which components are "heavy" and should be dynamically imported requires bundle analysis.
+Warns when importing known heavy libraries that should use dynamic imports.
 
-**Alternative:** Bundle analyzer tools (webpack-bundle-analyzer, @next/bundle-analyzer).
+```javascript
+// Triggers warning:
+import { MonacoEditor } from 'monaco-editor'  // ⚠️ ~2MB, use dynamic import
+import Chart from 'chart.js'                   // ⚠️ ~200KB, use dynamic import
+```
+
+**Includes 40+ heavy libraries by default**, including Monaco, Chart.js, Three.js, PDF.js, etc.
 
 ---
 
 ### ❌ 2.5 Preload Based on User Intent (`bundle-preload`)
 **ESLint Status:** Not covered
 
-**Why:** This is a design pattern for UX optimization, not something that can be statically analyzed.
-
-**Alternative:** Manual implementation.
+**Why:** This is a design pattern, not a detectable anti-pattern.
 
 ---
 
@@ -144,45 +162,34 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 ### ❌ 3.1 Cross-Request LRU Caching (`server-cache-lru`)
 **ESLint Status:** Not covered
 
-**Why:** Determining when to use LRU caching requires understanding data access patterns and deployment environment.
-
-**Alternative:** Manual analysis, performance monitoring.
-
 ---
 
-### ❌ 3.2 Minimize Serialization at RSC Boundaries (`server-serialization`)
-**ESLint Status:** Not covered
+### ⚠️ 3.2 Minimize Serialization at RSC Boundaries (`server-serialization`)
+**ESLint Rule:** `react-best-practices/no-object-spread-in-jsx-prop` (off by default)
 
-**Why:** Detecting excess props passed to client components requires understanding which fields are actually used.
+Detects spreading entire objects as props, which can over-serialize in RSC.
 
-**Alternative:** TypeScript strict prop typing, manual review.
+```javascript
+// Triggers warning when enabled:
+<Profile {...user} />  // ⚠️ Pass only needed fields: <Profile name={user.name} />
+```
+
+**Why Partial:** Cannot determine which fields are actually used by the component.
 
 ---
 
 ### ❌ 3.3 Parallel Data Fetching with Component Composition (`server-parallel-fetching`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting server-side waterfalls in RSC requires understanding component rendering order.
-
-**Alternative:** React DevTools, performance monitoring.
-
 ---
 
 ### ❌ 3.4 Per-Request Deduplication with React.cache() (`server-cache-react`)
 **ESLint Status:** Not covered
 
-**Why:** Determining when to use `React.cache()` requires understanding which functions are called multiple times per request.
-
-**Alternative:** Manual analysis, code review.
-
 ---
 
 ### ❌ 3.5 Use after() for Non-Blocking Operations (`server-after-nonblocking`)
 **ESLint Status:** Not covered
-
-**Why:** Identifying non-blocking operations (logging, analytics) that could be deferred requires semantic understanding.
-
-**Alternative:** Code review.
 
 ---
 
@@ -191,18 +198,10 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 ### ❌ 4.1 Deduplicate Global Event Listeners (`client-event-listeners`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting duplicate event listener patterns requires understanding component composition.
-
-**Alternative:** Code review, custom hooks.
-
 ---
 
 ### ❌ 4.2 Use SWR for Automatic Deduplication (`client-swr-dedup`)
 **ESLint Status:** Not covered
-
-**Why:** Determining when to use SWR vs raw fetch is a design decision.
-
-**Alternative:** Team conventions, code review.
 
 ---
 
@@ -211,63 +210,65 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 ### ❌ 5.1 Defer State Reads to Usage Point (`rerender-defer-reads`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting if `useSearchParams()` is only used in callbacks requires understanding component logic flow.
-
-**Alternative:** Manual review.
-
 ---
 
 ### ❌ 5.2 Extract to Memoized Components (`rerender-memo`)
 **ESLint Status:** Not covered
 
-**Why:** Identifying "expensive" computations that should be extracted requires performance profiling.
-
-**Alternative:** React DevTools Profiler.
-
 ---
 
 ### ⚠️ 5.3 Narrow Effect Dependencies (`rerender-dependencies`)
-**ESLint Status:** Partially covered
+**ESLint Rule:** `react-best-practices/prefer-narrow-dependencies`
 
-**ESLint Rule:** `react-hooks/exhaustive-deps`
+Detects object dependencies when only specific properties are used.
 
-**Why Partial:** The rule warns about missing dependencies but cannot determine if you should narrow the dependency (e.g., `user.id` vs `user`).
+```javascript
+// Triggers warning:
+useEffect(() => {
+  console.log(user.id)
+}, [user])  // ⚠️ Use [user.id] instead
+```
+
+**Why Partial:** May have false positives when object identity matters.
 
 ---
 
 ### ❌ 5.4 Subscribe to Derived State (`rerender-derived-state`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting continuous value subscriptions (like `useWindowWidth()`) that could be replaced with derived booleans requires semantic analysis.
+---
 
-**Alternative:** Performance profiling.
+### ✅ 5.5 Use Functional setState Updates (`rerender-functional-setstate`)
+**ESLint Rule:** `react-best-practices/prefer-functional-setstate`
+
+Detects setState calls that reference state directly instead of using functional updates.
+
+```javascript
+// Triggers warning:
+const [items, setItems] = useState([])
+setItems([...items, newItem])  // ⚠️ Use: setItems(prev => [...prev, newItem])
+```
 
 ---
 
-### ⚠️ 5.5 Use Functional setState Updates (`rerender-functional-setstate`)
-**ESLint Status:** Partially covered
+### ✅ 5.6 Use Lazy State Initialization (`rerender-lazy-state-init`)
+**ESLint Rule:** `react-best-practices/prefer-lazy-state-init`
 
-**ESLint Rule:** `react-hooks/exhaustive-deps`
+Detects useState with function calls that should use lazy initialization.
 
-**Why Partial:** The exhaustive-deps rule will warn if state is used in a callback without being in the dependency array, which indirectly encourages functional updates. However, it doesn't explicitly require functional setState.
+```javascript
+// Triggers warning:
+useState(expensiveFn())           // ⚠️ Use: useState(() => expensiveFn())
+useState(JSON.parse(stored))      // ⚠️ Use: useState(() => JSON.parse(stored))
+useState(localStorage.getItem()) // ⚠️ Use: useState(() => localStorage.getItem())
+```
+
+**Auto-fixable!**
 
 ---
 
-### ❌ 5.6 Use Lazy State Initialization (`rerender-lazy-state-init`)
+### ❌ 5.7 Use Transitions for Non-Urgent Updates (`rerender-transitions`)
 **ESLint Status:** Not covered
-
-**Why:** Detecting "expensive" initial state computations requires semantic understanding. ESLint cannot determine if `useState(expensiveComputation())` is expensive.
-
-**Potential Custom Rule:** Could create a rule that warns when `useState` is called with a function invocation instead of a function reference.
-
----
-
-### ✅ 5.7 Use Transitions for Non-Urgent Updates (`rerender-transitions`)
-**ESLint Status:** Not covered
-
-**Why:** Determining which updates are "non-urgent" requires understanding UX requirements.
-
-**Alternative:** Manual optimization.
 
 ---
 
@@ -276,73 +277,48 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 ### ❌ 6.1 Animate SVG Wrapper Instead of SVG Element (`rendering-animate-svg-wrapper`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting animated SVGs and suggesting wrapper elements requires understanding CSS animation usage.
-
-**Alternative:** Manual review.
-
 ---
 
 ### ❌ 6.2 CSS content-visibility for Long Lists (`rendering-content-visibility`)
-**ESLint Status:** Not covered
-
-**Why:** This is a CSS optimization, not JavaScript.
-
-**Alternative:** CSS linters, manual review.
+**ESLint Status:** Not covered (CSS)
 
 ---
 
 ### ❌ 6.3 Hoist Static JSX Elements (`rendering-hoist-jsx`)
-**ESLint Status:** Not covered
-
-**Why:** Detecting static JSX that could be hoisted requires understanding if the JSX depends on props/state.
-
-**Note:** React Compiler handles this automatically.
-
-**Alternative:** React Compiler, manual optimization.
+**ESLint Status:** Not covered (React Compiler handles this)
 
 ---
 
 ### ❌ 6.4 Optimize SVG Precision (`rendering-svg-precision`)
-**ESLint Status:** Not covered
-
-**Why:** This is about SVG file content, not JavaScript.
-
-**Alternative:** SVGO tool (`npx svgo --precision=1`).
+**ESLint Status:** Not covered (use SVGO)
 
 ---
 
 ### ❌ 6.5 Prevent Hydration Mismatch Without Flickering (`rendering-hydration-no-flicker`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting hydration mismatch patterns requires understanding SSR vs client rendering.
-
-**Alternative:** Manual review, Next.js warnings.
-
 ---
 
 ### ❌ 6.6 Use Activity Component for Show/Hide (`rendering-activity`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting expensive components that toggle visibility requires performance analysis.
-
-**Alternative:** React DevTools Profiler.
-
 ---
 
-### ⚠️ 6.7 Use Explicit Conditional Rendering (`rendering-conditional-render`)
-**ESLint Status:** Partially covered
+### ✅ 6.7 Use Explicit Conditional Rendering (`rendering-conditional-render`)
+**ESLint Rule:** `react-best-practices/no-falsy-and-operator`
 
-**ESLint Rule:** `no-restricted-syntax` (custom selector)
+Detects && operators with values that might render 0 or NaN.
 
-**Configuration:**
 ```javascript
-'no-restricted-syntax': ['warn', {
-  selector: 'JSXExpressionContainer > LogicalExpression[operator="&&"][left.type="Identifier"]',
-  message: 'Avoid using && for conditional rendering...'
-}]
+// Triggers error:
+{count && <Badge>{count}</Badge>}        // ❌ Renders "0" when count is 0
+{items.length && <List items={items} />} // ❌ Renders "0" for empty array
+
+// Correct:
+{count > 0 ? <Badge>{count}</Badge> : null}
 ```
 
-**Why Partial:** The rule warns about all `&&` usage in JSX, which may have false positives for boolean variables. It cannot determine if the left operand might be `0` or `NaN`.
+**Auto-fixable!**
 
 ---
 
@@ -351,124 +327,124 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 ### ❌ 7.1 Batch DOM CSS Changes (`js-batch-dom-css`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting multiple style mutations that should be batched requires control flow analysis.
-
-**Alternative:** Manual review.
-
 ---
 
-### ❌ 7.2 Build Index Maps for Repeated Lookups (`js-index-maps`)
-**ESLint Status:** Not covered
+### ✅ 7.2 Build Index Maps for Repeated Lookups (`js-index-maps`)
+**ESLint Rule:** `react-best-practices/no-array-find-in-loop`
 
-**Why:** Detecting `.find()` calls inside loops requires understanding the iteration context.
+Detects .find() inside loops that should use a Map.
 
-**Alternative:** Code review.
+```javascript
+// Triggers warning:
+orders.map(order => ({
+  user: users.find(u => u.id === order.userId)  // ⚠️ O(n²), build Map first
+}))
+```
 
 ---
 
 ### ❌ 7.3 Cache Property Access in Loops (`js-cache-property-access`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting repeated property access in hot paths requires understanding loop bodies.
-
-**Alternative:** Manual optimization.
-
 ---
 
 ### ❌ 7.4 Cache Repeated Function Calls (`js-cache-function-results`)
 **ESLint Status:** Not covered
 
-**Why:** Determining which functions should be memoized requires semantic understanding.
+---
 
-**Alternative:** Profiling, manual optimization.
+### ✅ 7.5 Cache Storage API Calls (`js-cache-storage`)
+**ESLint Rule:** `react-best-practices/no-uncached-storage`
+
+Detects repeated localStorage/sessionStorage calls.
+
+```javascript
+// Triggers warning:
+function Component() {
+  const a = localStorage.getItem('key')  // ⚠️ Multiple reads
+  const b = localStorage.getItem('key')  // Cache in variable instead
+}
+```
 
 ---
 
-### ❌ 7.5 Cache Storage API Calls (`js-cache-storage`)
-**ESLint Status:** Not covered
+### ⚠️ 7.6 Combine Multiple Array Iterations (`js-combine-iterations`)
+**ESLint Rule:** `react-best-practices/no-multiple-array-iterations` (off by default)
 
-**Why:** Detecting repeated `localStorage`/`sessionStorage` calls requires data flow analysis.
+Detects multiple .filter()/.map() on the same array.
 
-**Alternative:** Manual review.
-
----
-
-### ❌ 7.6 Combine Multiple Array Iterations (`js-combine-iterations`)
-**ESLint Status:** Not covered
-
-**Why:** Detecting multiple `.filter()` or `.map()` calls on the same array requires understanding data flow.
-
-**Alternative:** Manual optimization.
+```javascript
+// Triggers warning when enabled:
+const admins = users.filter(u => u.isAdmin)   // ⚠️ 3 iterations
+const testers = users.filter(u => u.isTester) // Combine into single loop
+const inactive = users.filter(u => !u.active)
+```
 
 ---
 
 ### ❌ 7.7 Early Length Check for Array Comparisons (`js-length-check-first`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting array comparisons that could benefit from length check requires semantic analysis.
-
-**Alternative:** Manual review.
-
 ---
 
 ### ❌ 7.8 Early Return from Functions (`js-early-exit`)
 **ESLint Status:** Not covered
 
-**Why:** Determining optimal early return points requires understanding function semantics.
-
-**Alternative:** Manual optimization.
-
 ---
 
-### ⚠️ 7.9 Hoist RegExp Creation (`js-hoist-regexp`)
-**ESLint Status:** Partially covered
+### ✅ 7.9 Hoist RegExp Creation (`js-hoist-regexp`)
+**ESLint Rule:** `react-best-practices/no-regexp-in-render`
 
-**ESLint Rule:** `no-restricted-syntax` (custom selector)
+Detects RegExp creation inside React components.
 
-**Configuration:**
 ```javascript
-'no-restricted-syntax': ['warn', {
-  selector: 'JSXElement NewExpression[callee.name="RegExp"]',
-  message: 'Move RegExp creation outside of JSX...'
-}]
+// Triggers warning:
+function Component({ query }) {
+  const regex = new RegExp(query, 'i')  // ⚠️ Recreated every render
+  // Use: const regex = useMemo(() => new RegExp(query, 'i'), [query])
+}
 ```
 
-**Why Partial:** Only catches `new RegExp()` in JSX, not regex literals or RegExp in function bodies that happen to be components.
-
 ---
 
-### ❌ 7.10 Use Loop for Min/Max Instead of Sort (`js-min-max-loop`)
-**ESLint Status:** Not covered
+### ✅ 7.10 Use Loop for Min/Max Instead of Sort (`js-min-max-loop`)
+**ESLint Rule:** `react-best-practices/no-sort-for-minmax`
 
-**Why:** Detecting when sorting is used just to find min/max requires understanding the usage context.
+Detects sorting to find min/max values.
 
-**Alternative:** Manual review.
-
----
-
-### ⚠️ 7.11 Use Set/Map for O(1) Lookups (`js-set-map-lookups`)
-**ESLint Status:** Not covered
-
-**Why:** Detecting repeated `.includes()` calls that should use Set requires understanding iteration patterns.
-
-**Alternative:** Manual optimization.
-
----
-
-### ⚠️ 7.12 Use toSorted() Instead of sort() for Immutability (`js-tosorted-immutable`)
-**ESLint Status:** Partially covered
-
-**ESLint Rule:** `no-restricted-syntax` (custom selector)
-
-**Configuration:**
 ```javascript
-'no-restricted-syntax': ['warn', {
-  selector: 'CallExpression[callee.property.name="sort"]',
-  message: 'Array.sort() mutates the original array...'
-}]
+// Triggers warning:
+const latest = items.sort((a, b) => b.date - a.date)[0]  // ⚠️ O(n log n)
+// Use: single loop O(n) or Math.max()
 ```
 
-**Why Partial:** Warns on ALL `.sort()` calls, including legitimate cases where mutation is intended. May have false positives.
+---
+
+### ✅ 7.11 Use Set/Map for O(1) Lookups (`js-set-map-lookups`)
+**ESLint Rule:** `react-best-practices/no-includes-in-loop`
+
+Detects .includes() inside loops.
+
+```javascript
+// Triggers warning:
+items.filter(item => allowedIds.includes(item.id))  // ⚠️ O(n²)
+// Use: const allowedSet = new Set(allowedIds); allowedSet.has(item.id)
+```
+
+---
+
+### ✅ 7.12 Use toSorted() Instead of sort() for Immutability (`js-tosorted-immutable`)
+**ESLint Rule:** `react-best-practices/prefer-tosorted`
+
+Detects .sort() which mutates arrays.
+
+```javascript
+// Triggers error:
+const sorted = items.sort(compareFn)  // ❌ Mutates original
+// Use: items.toSorted(compareFn) or [...items].sort(compareFn)
+```
+
+**Auto-fixable!**
 
 ---
 
@@ -477,60 +453,66 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 ### ❌ 8.1 Store Event Handlers in Refs (`advanced-event-handler-refs`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting when to use refs for event handlers requires understanding effect dependencies.
-
-**Alternative:** Manual optimization.
-
 ---
 
 ### ❌ 8.2 useLatest for Stable Callback Refs (`advanced-use-latest`)
 **ESLint Status:** Not covered
 
-**Why:** Detecting callback stability issues requires understanding component re-render patterns.
+---
 
-**Alternative:** Manual implementation.
+## Rule Reference Table
+
+| Rule ID | Custom Rule Name | Section | Auto-fix |
+|---------|-----------------|---------|----------|
+| 1.1 | `no-await-before-condition` | Waterfalls | ❌ |
+| 1.4 | `no-sequential-await` | Waterfalls | ❌ |
+| 2.1 | `no-restricted-imports` (built-in) | Bundle | ❌ |
+| 2.4 | `prefer-dynamic-import` | Bundle | ❌ |
+| 3.2 | `no-object-spread-in-jsx-prop` | Server | ❌ |
+| 5.3 | `prefer-narrow-dependencies` | Re-render | ❌ |
+| 5.5 | `prefer-functional-setstate` | Re-render | ❌ |
+| 5.6 | `prefer-lazy-state-init` | Re-render | ✅ |
+| 6.7 | `no-falsy-and-operator` | Rendering | ✅ |
+| 7.2 | `no-array-find-in-loop` | JS Perf | ❌ |
+| 7.5 | `no-uncached-storage` | JS Perf | ❌ |
+| 7.6 | `no-multiple-array-iterations` | JS Perf | ❌ |
+| 7.9 | `no-regexp-in-render` | JS Perf | ❌ |
+| 7.10 | `no-sort-for-minmax` | JS Perf | ❌ |
+| 7.11 | `no-includes-in-loop` | JS Perf | ❌ |
+| 7.12 | `prefer-tosorted` | JS Perf | ✅ |
 
 ---
 
-## Recommendations
+## Installation
 
-### For Maximum Coverage
+```bash
+# Install peer dependencies
+npm install -D eslint @eslint/js @typescript-eslint/eslint-plugin \
+  @typescript-eslint/parser eslint-plugin-react eslint-plugin-react-hooks \
+  eslint-plugin-import
 
-1. **Use the provided ESLint config** - Catches barrel imports, some conditional rendering issues, and array mutation patterns.
+# Copy the eslint-plugin directory to your project
+cp -r skills/react-best-practices/eslint-plugin ./
 
-2. **Enable React Compiler** - Automatically optimizes many patterns:
+# Copy the eslint.config.js
+cp skills/react-best-practices/eslint.config.js ./
+```
+
+---
+
+## Recommendations for Maximum Coverage
+
+1. **Use the custom plugin** - Adds 15 rules covering 33% of best practices
+
+2. **Enable React Compiler** - Automatically handles:
    - Hoisting static JSX
    - Memoization
    - Re-render optimization
 
-3. **Use bundle analyzers** - For bundle size optimization:
+3. **Use bundle analyzers**:
    - `@next/bundle-analyzer`
    - `webpack-bundle-analyzer`
 
-4. **Use React DevTools Profiler** - For performance optimization:
-   - Identifies expensive renders
-   - Shows component re-render frequency
-   - Highlights wasted renders
+4. **Use React DevTools Profiler** - For performance issues not catchable statically
 
-5. **TypeScript strict mode** - Catches many issues:
-   - Prop type mismatches
-   - Unused variables
-   - Type safety
-
-### Custom Tooling Ideas
-
-For teams wanting more coverage, consider custom tooling:
-
-1. **AST-based custom rules** - Can catch:
-   - Sequential awaits in same block
-   - `useState` with function calls (not lazy init)
-   - Multiple `.filter()` on same variable
-
-2. **TypeScript compiler plugin** - Can analyze:
-   - Data flow between async operations
-   - Props usage in client components
-
-3. **Runtime profiling** - Can detect:
-   - Actual waterfall patterns
-   - Expensive renders
-   - Unnecessary re-renders
+5. **TypeScript strict mode** - Catches type-related issues
