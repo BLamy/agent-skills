@@ -14,6 +14,7 @@ module.exports = {
       category: 'Performance',
       recommended: true,
     },
+    fixable: 'code',
     messages: {
       preferFunctional:
         'setState references "{{stateName}}" directly. Use functional update: set{{SetterSuffix}}(prev => ...) to avoid stale closures and enable stable callbacks.',
@@ -22,6 +23,7 @@ module.exports = {
   },
 
   create(context) {
+    const sourceCode = context.getSourceCode();
     // Track useState declarations: { setterName: stateName }
     const stateSetters = new Map();
     // Track which state variables exist
@@ -64,6 +66,13 @@ module.exports = {
 
     function capitalizeFirst(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function replaceStateWithPrev(text, stateName) {
+      // Replace the state variable with 'prev' using word boundaries
+      // This handles cases like: items -> prev, items.filter -> prev.filter
+      const regex = new RegExp(`\\b${stateName}\\b`, 'g');
+      return text.replace(regex, 'prev');
     }
 
     return {
@@ -119,6 +128,11 @@ module.exports = {
             data: {
               stateName,
               SetterSuffix: capitalizeFirst(stateName),
+            },
+            fix(fixer) {
+              const argText = sourceCode.getText(argument);
+              const newArgText = replaceStateWithPrev(argText, stateName);
+              return fixer.replaceText(argument, `prev => ${newArgText}`);
             },
           });
         }

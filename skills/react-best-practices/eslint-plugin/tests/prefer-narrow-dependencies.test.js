@@ -34,6 +34,11 @@ describe('prefer-narrow-dependencies', () => {
               console.log(user.id);
             }, [user]);
           `,
+          output: `
+            useEffect(() => {
+              console.log(user.id);
+            }, [user.id]);
+          `,
           errors: [{ messageId: 'narrowDependency' }],
         },
         {
@@ -41,6 +46,11 @@ describe('prefer-narrow-dependencies', () => {
             useMemo(() => {
               return config.apiUrl;
             }, [config]);
+          `,
+          output: `
+            useMemo(() => {
+              return config.apiUrl;
+            }, [config.apiUrl]);
           `,
           errors: [{ messageId: 'narrowDependency' }],
         },

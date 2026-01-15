@@ -49,6 +49,21 @@ describe('no-regexp-in-render', () => {
           `,
           errors: [{ messageId: 'regexpInRender' }],
         },
+        {
+          code: `
+            function EmailValidator() {
+              const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/;
+              return <input pattern={emailRegex.source} />;
+            }
+          `,
+          output: `
+            function EmailValidator() {
+              const emailRegex = useMemo(() => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/, []);
+              return <input pattern={emailRegex.source} />;
+            }
+          `,
+          errors: [{ messageId: 'regexpLiteralInRender' }],
+        },
       ],
     });
   });

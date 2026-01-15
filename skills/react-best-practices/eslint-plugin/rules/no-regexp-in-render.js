@@ -14,6 +14,7 @@ module.exports = {
       category: 'Performance',
       recommended: true,
     },
+    fixable: 'code',
     messages: {
       regexpInRender:
         'RegExp created inside component runs on every render. Hoist to module scope or wrap in useMemo().',
@@ -24,6 +25,7 @@ module.exports = {
   },
 
   create(context) {
+    const sourceCode = context.getSourceCode();
     // Track if we're inside a React component
     const componentStack = [];
 
@@ -134,9 +136,14 @@ module.exports = {
         // Only warn for complex patterns that are clearly expensive
         const pattern = node.regex.pattern;
         if (pattern.length > 20 || pattern.includes('(?') || pattern.includes('\\d')) {
+          const regexpText = sourceCode.getText(node);
           context.report({
             node,
             messageId: 'regexpLiteralInRender',
+            fix(fixer) {
+              // Wrap the regexp literal in useMemo with empty deps (no external dependencies)
+              return fixer.replaceText(node, `useMemo(() => ${regexpText}, [])`);
+            },
           });
         }
       },

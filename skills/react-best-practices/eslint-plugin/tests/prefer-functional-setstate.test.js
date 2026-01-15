@@ -30,12 +30,20 @@ describe('prefer-functional-setstate', () => {
             const [items, setItems] = useState([]);
             setItems([...items, newItem]);
           `,
+          output: `
+            const [items, setItems] = useState([]);
+            setItems(prev => [...prev, newItem]);
+          `,
           errors: [{ messageId: 'preferFunctional' }],
         },
         {
           code: `
             const [count, setCount] = useState(0);
             setCount(count + 1);
+          `,
+          output: `
+            const [count, setCount] = useState(0);
+            setCount(prev => prev + 1);
           `,
           errors: [{ messageId: 'preferFunctional' }],
         },

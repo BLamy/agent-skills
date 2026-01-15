@@ -13,6 +13,7 @@ module.exports = {
       category: 'Performance',
       recommended: true,
     },
+    fixable: 'code',
     messages: {
       narrowDependency:
         'Effect depends on "{{objectName}}" but only uses "{{properties}}". Use {{suggestion}} as dependencies instead to reduce re-runs.',
@@ -120,6 +121,11 @@ module.exports = {
                 objectName,
                 properties: propsArray.join(', '),
                 suggestion,
+              },
+              fix(fixer) {
+                // Replace the single object dependency with property accesses
+                const replacement = propsArray.map((p) => `${objectName}.${p}`).join(', ');
+                return fixer.replaceText(dep, replacement);
               },
             });
           }
