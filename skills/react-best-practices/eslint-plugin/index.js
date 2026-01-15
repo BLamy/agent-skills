@@ -33,6 +33,9 @@ const noAwaitBeforeCondition = require('./rules/no-await-before-condition');
 const preferDynamicImport = require('./rules/prefer-dynamic-import');
 const preferNarrowDependencies = require('./rules/prefer-narrow-dependencies');
 const noObjectSpreadInJsxProp = require('./rules/no-object-spread-in-jsx-prop');
+const cacheLoopLength = require('./rules/cache-loop-length');
+const preferEarlyReturn = require('./rules/prefer-early-return');
+const noNestedTernaryInJsx = require('./rules/no-nested-ternary-in-jsx');
 
 const plugin = {
   meta: {
@@ -58,6 +61,9 @@ const plugin = {
     // Section 6: Rendering Performance
     'no-falsy-and-operator': noFalsyAndOperator,
 
+    // Section 6: Rendering Performance (extended)
+    'no-nested-ternary-in-jsx': noNestedTernaryInJsx,
+
     // Section 7: JavaScript Performance
     'no-array-find-in-loop': noArrayFindInLoop,
     'no-includes-in-loop': noIncludesInLoop,
@@ -66,6 +72,8 @@ const plugin = {
     'prefer-tosorted': preferTosorted,
     'no-regexp-in-render': noRegexpInRender,
     'no-sort-for-minmax': noSortForMinmax,
+    'cache-loop-length': cacheLoopLength,
+    'prefer-early-return': preferEarlyReturn,
   },
   configs: {
     recommended: {
@@ -90,9 +98,14 @@ const plugin = {
         'react-best-practices/no-uncached-storage': 'warn',
         'react-best-practices/no-sort-for-minmax': 'warn',
 
+        // Code quality rules
+        'react-best-practices/no-nested-ternary-in-jsx': 'warn',
+        'react-best-practices/prefer-early-return': 'warn',
+
         // Lower impact rules (off by default)
         'react-best-practices/no-multiple-array-iterations': 'off',
         'react-best-practices/no-object-spread-in-jsx-prop': 'off',
+        'react-best-practices/cache-loop-length': 'off',
       },
     },
     strict: {
@@ -113,6 +126,9 @@ const plugin = {
         'react-best-practices/prefer-tosorted': 'error',
         'react-best-practices/no-regexp-in-render': 'error',
         'react-best-practices/no-sort-for-minmax': 'error',
+        'react-best-practices/no-nested-ternary-in-jsx': 'error',
+        'react-best-practices/prefer-early-return': 'error',
+        'react-best-practices/cache-loop-length': 'warn',
       },
     },
   },

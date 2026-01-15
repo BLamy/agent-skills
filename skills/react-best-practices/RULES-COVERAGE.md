@@ -21,18 +21,18 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 | 3. Server-Side Performance | 5 | 0 | 1 | 4 |
 | 4. Client-Side Data Fetching | 2 | 0 | 0 | 2 |
 | 5. Re-render Optimization | 7 | 3 | 1 | 3 |
-| 6. Rendering Performance | 7 | 1 | 0 | 6 |
-| 7. JavaScript Performance | 12 | 7 | 0 | 5 |
+| 6. Rendering Performance | 7 | 2 | 0 | 5 |
+| 7. JavaScript Performance | 12 | 9 | 0 | 3 |
 | 8. Advanced Patterns | 2 | 0 | 0 | 2 |
-| **Total** | **45** | **15** | **3** | **27** |
+| **Total** | **45** | **18** | **3** | **24** |
 
-**Coverage improved from 4% to 33% with custom rules!**
+**Coverage improved from 4% to 40% with custom rules!**
 
 ---
 
 ## Custom ESLint Plugin: `eslint-plugin-react-best-practices`
 
-The custom plugin provides 15 rules covering patterns that can be statically analyzed:
+The custom plugin provides 18 rules covering patterns that can be statically analyzed:
 
 ```javascript
 // eslint.config.js
@@ -322,6 +322,22 @@ Detects && operators with values that might render 0 or NaN.
 
 ---
 
+### ✅ 6.8 Avoid Nested Ternaries in JSX (`rendering-nested-ternary`)
+**ESLint Rule:** `react-best-practices/no-nested-ternary-in-jsx`
+
+Detects nested ternary operators in JSX which hurt readability.
+
+```javascript
+// Triggers warning:
+<div>{isLoading ? <Spinner /> : hasError ? <Error /> : <Content />}</div>
+
+// Better: extract to variable or component
+const content = isLoading ? <Spinner /> : hasError ? <Error /> : <Content />;
+return <div>{content}</div>;
+```
+
+---
+
 ## Section 7: JavaScript Performance (LOW-MEDIUM)
 
 ### ❌ 7.1 Batch DOM CSS Changes (`js-batch-dom-css`)
@@ -343,8 +359,18 @@ orders.map(order => ({
 
 ---
 
-### ❌ 7.3 Cache Property Access in Loops (`js-cache-property-access`)
-**ESLint Status:** Not covered
+### ✅ 7.3 Cache Property Access in Loops (`js-cache-property-access`)
+**ESLint Rule:** `react-best-practices/cache-loop-length` (off by default)
+
+Detects .length access in for loop conditions that could be cached.
+
+```javascript
+// Triggers warning when enabled:
+for (let i = 0; i < arr.length; i++) {  // ⚠️ .length accessed every iteration
+  console.log(arr[i]);
+}
+// Better: const len = arr.length; for (let i = 0; i < len; i++)
+```
 
 ---
 
@@ -387,8 +413,24 @@ const inactive = users.filter(u => !u.active)
 
 ---
 
-### ❌ 7.8 Early Return from Functions (`js-early-exit`)
-**ESLint Status:** Not covered
+### ✅ 7.8 Early Return from Functions (`js-early-exit`)
+**ESLint Rule:** `react-best-practices/prefer-early-return`
+
+Detects deeply nested conditionals that could use early returns.
+
+```javascript
+// Triggers warning (depth >= 3):
+function process(data) {
+  if (data) {
+    if (data.valid) {
+      if (data.active) {  // ⚠️ Too deeply nested
+        return data.value;
+      }
+    }
+  }
+}
+// Better: use early returns to flatten the structure
+```
 
 ---
 
@@ -473,9 +515,12 @@ const sorted = items.sort(compareFn)  // ❌ Mutates original
 | 5.5 | `prefer-functional-setstate` | Re-render | ✅ |
 | 5.6 | `prefer-lazy-state-init` | Re-render | ✅ |
 | 6.7 | `no-falsy-and-operator` | Rendering | ✅ |
+| 6.8 | `no-nested-ternary-in-jsx` | Rendering | ❌ |
 | 7.2 | `no-array-find-in-loop` | JS Perf | ❌ |
+| 7.3 | `cache-loop-length` | JS Perf | ❌ |
 | 7.5 | `no-uncached-storage` | JS Perf | ❌ |
 | 7.6 | `no-multiple-array-iterations` | JS Perf | ❌ |
+| 7.8 | `prefer-early-return` | JS Perf | ❌ |
 | 7.9 | `no-regexp-in-render` | JS Perf | ✅ |
 | 7.10 | `no-sort-for-minmax` | JS Perf | ❌ |
 | 7.11 | `no-includes-in-loop` | JS Perf | ❌ |
