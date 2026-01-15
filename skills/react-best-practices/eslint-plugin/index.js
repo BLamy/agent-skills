@@ -36,6 +36,9 @@ const noObjectSpreadInJsxProp = require('./rules/no-object-spread-in-jsx-prop');
 const cacheLoopLength = require('./rules/cache-loop-length');
 const preferEarlyReturn = require('./rules/prefer-early-return');
 const noNestedTernaryInJsx = require('./rules/no-nested-ternary-in-jsx');
+const preferLengthCheckFirst = require('./rules/prefer-length-check-first');
+const preferTransitionForFrequentUpdates = require('./rules/prefer-transition-for-frequent-updates');
+const preferStaticJsxOutside = require('./rules/prefer-static-jsx-outside');
 
 const plugin = {
   meta: {
@@ -57,12 +60,14 @@ const plugin = {
     'prefer-lazy-state-init': preferLazyStateInit,
     'prefer-functional-setstate': preferFunctionalSetstate,
     'prefer-narrow-dependencies': preferNarrowDependencies,
+    'prefer-transition-for-frequent-updates': preferTransitionForFrequentUpdates,
 
     // Section 6: Rendering Performance
     'no-falsy-and-operator': noFalsyAndOperator,
 
     // Section 6: Rendering Performance (extended)
     'no-nested-ternary-in-jsx': noNestedTernaryInJsx,
+    'prefer-static-jsx-outside': preferStaticJsxOutside,
 
     // Section 7: JavaScript Performance
     'no-array-find-in-loop': noArrayFindInLoop,
@@ -74,6 +79,7 @@ const plugin = {
     'no-sort-for-minmax': noSortForMinmax,
     'cache-loop-length': cacheLoopLength,
     'prefer-early-return': preferEarlyReturn,
+    'prefer-length-check-first': preferLengthCheckFirst,
   },
   configs: {
     recommended: {
@@ -102,10 +108,15 @@ const plugin = {
         'react-best-practices/no-nested-ternary-in-jsx': 'warn',
         'react-best-practices/prefer-early-return': 'warn',
 
+        // Medium-high impact rules
+        'react-best-practices/prefer-length-check-first': 'warn',
+        'react-best-practices/prefer-transition-for-frequent-updates': 'warn',
+
         // Lower impact rules (off by default)
         'react-best-practices/no-multiple-array-iterations': 'off',
         'react-best-practices/no-object-spread-in-jsx-prop': 'off',
         'react-best-practices/cache-loop-length': 'off',
+        'react-best-practices/prefer-static-jsx-outside': 'off', // React Compiler handles this
       },
     },
     strict: {
@@ -129,6 +140,9 @@ const plugin = {
         'react-best-practices/no-nested-ternary-in-jsx': 'error',
         'react-best-practices/prefer-early-return': 'error',
         'react-best-practices/cache-loop-length': 'warn',
+        'react-best-practices/prefer-length-check-first': 'error',
+        'react-best-practices/prefer-transition-for-frequent-updates': 'error',
+        'react-best-practices/prefer-static-jsx-outside': 'warn',
       },
     },
   },

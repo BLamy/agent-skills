@@ -20,19 +20,19 @@ This document maps each rule from the React Best Practices guide to its ESLint c
 | 2. Bundle Size Optimization | 5 | 2 | 0 | 3 |
 | 3. Server-Side Performance | 5 | 0 | 1 | 4 |
 | 4. Client-Side Data Fetching | 2 | 0 | 0 | 2 |
-| 5. Re-render Optimization | 7 | 3 | 1 | 3 |
-| 6. Rendering Performance | 7 | 2 | 0 | 5 |
-| 7. JavaScript Performance | 12 | 9 | 0 | 3 |
+| 5. Re-render Optimization | 7 | 4 | 1 | 2 |
+| 6. Rendering Performance | 7 | 3 | 0 | 4 |
+| 7. JavaScript Performance | 12 | 10 | 0 | 2 |
 | 8. Advanced Patterns | 2 | 0 | 0 | 2 |
-| **Total** | **45** | **18** | **3** | **24** |
+| **Total** | **45** | **21** | **3** | **21** |
 
-**Coverage improved from 4% to 40% with custom rules!**
+**Coverage improved from 4% to 47% with custom rules!**
 
 ---
 
 ## Custom ESLint Plugin: `eslint-plugin-react-best-practices`
 
-The custom plugin provides 18 rules covering patterns that can be statically analyzed:
+The custom plugin provides 21 rules covering patterns that can be statically analyzed:
 
 ```javascript
 // eslint.config.js
@@ -267,8 +267,22 @@ useState(localStorage.getItem()) // ⚠️ Use: useState(() => localStorage.getI
 
 ---
 
-### ❌ 5.7 Use Transitions for Non-Urgent Updates (`rerender-transitions`)
-**ESLint Status:** Not covered
+### ✅ 5.7 Use Transitions for Non-Urgent Updates (`rerender-transitions`)
+**ESLint Rule:** `react-best-practices/prefer-transition-for-frequent-updates`
+
+Detects setState calls in frequent event handlers (scroll, resize, mousemove) without startTransition.
+
+```javascript
+// Triggers warning:
+window.addEventListener('scroll', () => {
+  setScrollY(window.scrollY)  // ⚠️ Blocks UI on every scroll
+});
+
+// Correct:
+window.addEventListener('scroll', () => {
+  startTransition(() => setScrollY(window.scrollY))
+});
+```
 
 ---
 
@@ -284,8 +298,29 @@ useState(localStorage.getItem()) // ⚠️ Use: useState(() => localStorage.getI
 
 ---
 
-### ❌ 6.3 Hoist Static JSX Elements (`rendering-hoist-jsx`)
-**ESLint Status:** Not covered (React Compiler handles this)
+### ✅ 6.3 Hoist Static JSX Elements (`rendering-hoist-jsx`)
+**ESLint Rule:** `react-best-practices/prefer-static-jsx-outside` (off by default)
+
+Detects static JSX elements inside components that could be hoisted outside to avoid re-creation.
+
+```javascript
+// Triggers warning when enabled:
+function Component({ loading }) {
+  return (
+    <div>
+      {loading && <div className="animate-pulse h-20 bg-gray-200" />}
+    </div>
+  );
+}
+
+// Better: hoist outside
+const skeleton = <div className="animate-pulse h-20 bg-gray-200" />;
+function Component({ loading }) {
+  return <div>{loading && skeleton}</div>;
+}
+```
+
+**Note:** React Compiler handles this automatically, so this rule is off by default.
 
 ---
 
@@ -412,8 +447,23 @@ const inactive = users.filter(u => !u.active)
 
 ---
 
-### ❌ 7.7 Early Length Check for Array Comparisons (`js-length-check-first`)
-**ESLint Status:** Not covered
+### ✅ 7.7 Early Length Check for Array Comparisons (`js-length-check-first`)
+**ESLint Rule:** `react-best-practices/prefer-length-check-first`
+
+Detects array comparison functions that use expensive operations without checking length first.
+
+```javascript
+// Triggers warning:
+function hasChanges(current, original) {
+  return current.sort().join() !== original.sort().join()  // ⚠️ No length check
+}
+
+// Correct:
+function hasChanges(current, original) {
+  if (current.length !== original.length) return true;
+  return current.toSorted().join() !== original.toSorted().join();
+}
+```
 
 ---
 
@@ -522,12 +572,15 @@ const sorted = items.sort(compareFn)  // ❌ Mutates original
 | 5.3 | `prefer-narrow-dependencies` | Re-render | ✅ |
 | 5.5 | `prefer-functional-setstate` | Re-render | ✅ |
 | 5.6 | `prefer-lazy-state-init` | Re-render | ✅ |
+| 5.7 | `prefer-transition-for-frequent-updates` | Re-render | ❌ |
+| 6.3 | `prefer-static-jsx-outside` | Rendering | ❌ |
 | 6.7 | `no-falsy-and-operator` | Rendering | ✅ |
 | 6.8 | `no-nested-ternary-in-jsx` | Rendering | ❌ |
 | 7.2 | `no-array-find-in-loop` | JS Perf | ✅ |
 | 7.3 | `cache-loop-length` | JS Perf | ✅ |
 | 7.5 | `no-uncached-storage` | JS Perf | ❌ |
 | 7.6 | `no-multiple-array-iterations` | JS Perf | ❌ |
+| 7.7 | `prefer-length-check-first` | JS Perf | ❌ |
 | 7.8 | `prefer-early-return` | JS Perf | ❌ |
 | 7.9 | `no-regexp-in-render` | JS Perf | ✅ |
 | 7.10 | `no-sort-for-minmax` | JS Perf | ✅ |
@@ -555,7 +608,7 @@ cp skills/react-best-practices/eslint.config.js ./
 
 ## Recommendations for Maximum Coverage
 
-1. **Use the custom plugin** - Adds 15 rules covering 33% of best practices
+1. **Use the custom plugin** - Adds 21 rules covering 47% of best practices
 
 2. **Enable React Compiler** - Automatically handles:
    - Hoisting static JSX
