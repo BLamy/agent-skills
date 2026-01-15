@@ -108,8 +108,20 @@ module.exports = {
           const returnUsesVar = containsIdentifier(consequent, awaitedVar);
 
           // If condition doesn't use the var and return doesn't use the var,
-          // suggest deferring the await
+          // check if variable is used in remaining statements after the early return
           if (!conditionUsesVar && !returnUsesVar) {
+            // Check if variable is used in subsequent statements
+            let usedLater = false;
+            for (let j = i + 2; j < body.length; j++) {
+              if (containsIdentifier(body[j], awaitedVar)) {
+                usedLater = true;
+                break;
+              }
+            }
+            // Only report if the variable IS used later (that's the optimization opportunity)
+            // If not used later, there's no benefit to deferring
+            if (!usedLater) continue;
+
             context.report({
               node: current,
               messageId: 'deferAwait',

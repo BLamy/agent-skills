@@ -469,14 +469,14 @@ const sorted = items.sort(compareFn)  // ❌ Mutates original
 | 2.1 | `no-restricted-imports` (built-in) | Bundle | ❌ |
 | 2.4 | `prefer-dynamic-import` | Bundle | ❌ |
 | 3.2 | `no-object-spread-in-jsx-prop` | Server | ❌ |
-| 5.3 | `prefer-narrow-dependencies` | Re-render | ❌ |
-| 5.5 | `prefer-functional-setstate` | Re-render | ❌ |
+| 5.3 | `prefer-narrow-dependencies` | Re-render | ✅ |
+| 5.5 | `prefer-functional-setstate` | Re-render | ✅ |
 | 5.6 | `prefer-lazy-state-init` | Re-render | ✅ |
 | 6.7 | `no-falsy-and-operator` | Rendering | ✅ |
 | 7.2 | `no-array-find-in-loop` | JS Perf | ❌ |
 | 7.5 | `no-uncached-storage` | JS Perf | ❌ |
 | 7.6 | `no-multiple-array-iterations` | JS Perf | ❌ |
-| 7.9 | `no-regexp-in-render` | JS Perf | ❌ |
+| 7.9 | `no-regexp-in-render` | JS Perf | ✅ |
 | 7.10 | `no-sort-for-minmax` | JS Perf | ❌ |
 | 7.11 | `no-includes-in-loop` | JS Perf | ❌ |
 | 7.12 | `prefer-tosorted` | JS Perf | ✅ |
