@@ -16,8 +16,6 @@ module.exports = {
     },
     fixable: 'code',
     messages: {
-      preferLazyInit:
-        'useState with a function call runs on every render. Use lazy initialization: useState(() => {{ return {{{call}}} }})',
       preferLazyInitSimple:
         'useState with a function call runs on every render. Use lazy initialization: useState(() => expensiveFn())',
     },
