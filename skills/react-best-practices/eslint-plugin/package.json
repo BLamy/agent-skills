@@ -1,0 +1,39 @@
+{
+  "name": "eslint-plugin-react-best-practices",
+  "version": "1.0.0",
+  "description": "ESLint rules for React performance optimization based on React Best Practices guide",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin",
+    "react",
+    "performance",
+    "best-practices"
+  ],
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0",
+    "eslint": "^9.0.0",
+    "@typescript-eslint/parser": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vercel-labs/agent-skills"
+  },
+  "files": [
+    "index.js",
+    "rules/**/*.js"
+  ]
+}
